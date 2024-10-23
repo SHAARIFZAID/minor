@@ -1,0 +1,84 @@
+import streamlit as st
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+# Page configuration
+st.set_page_config(page_title="Heart Disease Prediction", page_icon=❤️", layout="wide")
+
+# App title and description
+st.title("❤️ Heart Disease Prediction App")
+st.markdown("""
+    Welcome to the Heart Disease Prediction app. 
+    Upload your dataset below and we'll help predict the likelihood of heart disease based on the provided data.
+    """)
+
+# Sidebar
+st.sidebar.title("Navigation")
+st.sidebar.subheader("Upload your dataset")
+
+# Upload CSV
+uploaded_file = st.sidebar.file_uploader("Upload CSV file", type="csv")
+
+# Display a nice header when file is uploaded
+if uploaded_file is not None:
+    # Read the CSV file
+    df = pd.read_csv(uploaded_file)
+    
+    # Data preview
+    st.subheader("Dataset Preview")
+    st.write("Here’s a preview of the dataset you uploaded:")
+    st.dataframe(df.head())
+    
+    # Select columns to use in prediction
+    st.sidebar.subheader("Select Features")
+    selected_features = st.sidebar.multiselect("Choose the features you want to use for prediction:", df.columns.tolist(), default=df.columns.tolist())
+    
+    # Check if target column exists
+    if 'target' in df.columns:
+        X = df[selected_features]
+        y = df['target']
+        
+        # Train-test split
+        st.sidebar.subheader("Model Settings")
+        test_size = st.sidebar.slider("Test Size (Proportion of data used for testing)", 0.1, 0.5, 0.2)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+        
+        # Model training
+        model = RandomForestClassifier()
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        
+        # Accuracy and results
+        accuracy = accuracy_score(y_test, y_pred)
+        cm = confusion_matrix(y_test, y_pred)
+        
+        st.subheader("Prediction Results")
+        st.write(f"Accuracy of the model: **{accuracy * 100:.2f}%**")
+        
+        # Confusion matrix
+        st.write("Confusion Matrix:")
+        fig, ax = plt.subplots()
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+        st.pyplot(fig)
+        
+    else:
+        st.warning("The dataset you uploaded does not have a 'target' column. Please ensure your dataset has a column indicating the target variable (0 or 1).")
+else:
+    st.info("Please upload a CSV file to get started.")
+
+# Footer with more information
+st.sidebar.markdown("----")
+st.sidebar.info("""
+    Created by **Your Name**.
+    This app is designed to predict heart disease risk based on health data.
+""")
+
+# Footer
+st.markdown("""
+    ---
+    Built with ❤️ by [Your Name].
+""")
